@@ -159,6 +159,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
             ])
         )
+
+
     # --- РЕДАГУВАННЯ ---
     elif choice == "edit_status":
         keyboard = [
@@ -256,3 +258,4 @@ app.add_handler(CallbackQueryHandler(button))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
 app.run_polling()
+
