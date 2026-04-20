@@ -22,18 +22,20 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-# ---------- START ----------
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
+# ---------- ГОЛОВНЕ МЕНЮ (хелпер) ----------
+def main_menu_keyboard():
+    return InlineKeyboardMarkup([
         [InlineKeyboardButton("📖 Манга", callback_data="manga")],
         [InlineKeyboardButton("🎬 Аніме", callback_data="anime")],
         [InlineKeyboardButton("🎥 Серіали", callback_data="series")],
         [InlineKeyboardButton("📋 Мій список", callback_data="list")]
-    ]
+    ])
 
+# ---------- START ----------
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Обери категорію:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup=main_menu_keyboard()
     )
 
 # ---------- CALLBACK ----------
@@ -49,8 +51,16 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     choice = query.data
 
+    # --- ГОЛОВНЕ МЕНЮ ---
+    if choice == "main_menu":
+        context.user_data.clear()
+        await query.message.reply_text(
+            "Обери категорію:",
+            reply_markup=main_menu_keyboard()
+        )
+
     # --- ДОДАТИ ---
-    if choice in ["manga", "anime", "series"]:
+    elif choice in ["manga", "anime", "series"]:
         context.user_data.clear()
         context.user_data["type"] = choice
         await query.message.reply_text("Введи назву:")
@@ -60,7 +70,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("📖 Манга", callback_data="list_manga")],
             [InlineKeyboardButton("🎬 Аніме", callback_data="list_anime")],
-            [InlineKeyboardButton("🎥 Серіали", callback_data="list_series")]
+            [InlineKeyboardButton("🎥 Серіали", callback_data="list_series")],
+            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
         ]
         await query.message.reply_text("Обери:", reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -69,7 +80,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         items = data[user_id][category]
 
         if not items:
-            await query.message.reply_text("Пусто 😢")
+            await query.message.reply_text(
+                "Пусто 😢",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                ])
+            )
             return
 
         keyboard = []
@@ -80,6 +96,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     callback_data=f"item_{category}_{i}"
                 )
             ])
+        keyboard.append([InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")])  # НОВА КНОПКА
 
         await query.message.reply_text(
             "Обери тайтл:",
@@ -97,7 +114,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("🔗 Відкрити", url=item["link"])],
             [InlineKeyboardButton("✏️ Змінити статус", callback_data="edit_status")],
-            [InlineKeyboardButton("🗑️ Видалити", callback_data="delete")]
+            [InlineKeyboardButton("🗑️ Видалити", callback_data="delete")],
+            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
         ]
 
         await query.message.reply_text(
@@ -113,7 +131,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         save_data(data)
         context.user_data.clear()
 
-        await query.message.reply_text("🗑️ Видалено!")
+        await query.message.reply_text(
+            "🗑️ Видалено!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+            ])
+        )
 
     # --- РЕДАГУВАННЯ ---
     elif choice == "edit_status":
@@ -121,7 +144,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("📖 Дивлюсь/Читаю", callback_data="status_watching")],
             [InlineKeyboardButton("✅ Завершено", callback_data="status_done")],
             [InlineKeyboardButton("⏸️ На паузі", callback_data="status_pause")],
-            [InlineKeyboardButton("❌ Кинув", callback_data="status_drop")]
+            [InlineKeyboardButton("❌ Кинув", callback_data="status_drop")],
+            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
         ]
 
         await query.message.reply_text(
@@ -141,7 +165,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             save_data(data)
             context.user_data.clear()
 
-            await query.message.reply_text("✏️ Оновлено!")
+            await query.message.reply_text(
+                "✏️ Оновлено!",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                ])
+            )
 
         # НОВИЙ ЗАПИС
         else:
@@ -158,18 +187,21 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             save_data(data)
             context.user_data.clear()
 
-            await query.message.reply_text("✅ Додано!")
+            await query.message.reply_text(
+                "✅ Додано!",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                ])
+            )
 
 # ---------- TEXT ----------
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
-    # Назва
     if "type" in context.user_data and "title" not in context.user_data:
         context.user_data["title"] = text
         await update.message.reply_text("Надішли посилання або напиши 'skip'")
 
-    # Посилання
     elif "title" in context.user_data and "link" not in context.user_data:
         if text.lower() == "skip":
             context.user_data["link"] = "—"
@@ -192,6 +224,10 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
+app.add_handler(CallbackQueryHandler(button))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+
+app.run_polling()
 app.add_handler(CallbackQueryHandler(button))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
