@@ -159,32 +159,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
             ])
         )
-
-
-    # --- КОНКРЕТНИЙ ТАЙТЛ ---
-elif choice.startswith("item_"):
-    parts = choice.split("_", 2)  # розбиваємо лише на 3 частини
-    _, category, index = parts
-    index = int(index)
-
-    context.user_data["edit"] = (category, index)
-    item = data[user_id][category][index]
-
-    # Перевіряємо чи є валідне посилання
-    link = item.get("link", "—")
-    keyboard = []
-
-    if link and link != "—" and link.startswith("http"):
-        keyboard.append([InlineKeyboardButton("🔗 Відкрити", url=link)])
-
-    keyboard.append([InlineKeyboardButton("✏️ Змінити статус", callback_data="edit_status")])
-    keyboard.append([InlineKeyboardButton("🗑️ Видалити", callback_data="delete")])
-    keyboard.append([InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")])
-
-    await query.message.reply_text(
-        f"{item['title']}\nСтатус: {item['status']}",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
     # --- РЕДАГУВАННЯ ---
     elif choice == "edit_status":
         keyboard = [
