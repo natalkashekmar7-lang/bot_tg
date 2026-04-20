@@ -33,9 +33,31 @@ def main_menu_keyboard():
 
 # ---------- START ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
     await update.message.reply_text(
         "Обери категорію:",
         reply_markup=main_menu_keyboard()
+    )
+
+# ---------- MENU COMMAND ----------
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    await update.message.reply_text(
+        "Обери категорію:",
+        reply_markup=main_menu_keyboard()
+    )
+
+# ---------- ADD COMMAND ----------  ← НОВА КОМАНДА
+async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    keyboard = [
+        [InlineKeyboardButton("📖 Манга", callback_data="manga")],
+        [InlineKeyboardButton("🎬 Аніме", callback_data="anime")],
+        [InlineKeyboardButton("🎥 Серіали", callback_data="series")],
+    ]
+    await update.message.reply_text(
+        "Що додаємо?",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 # ---------- CALLBACK ----------
@@ -71,7 +93,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("📖 Манга", callback_data="list_manga")],
             [InlineKeyboardButton("🎬 Аніме", callback_data="list_anime")],
             [InlineKeyboardButton("🎥 Серіали", callback_data="list_series")],
-            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
         ]
         await query.message.reply_text("Обери:", reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -83,7 +105,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(
                 "Пусто 😢",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
                 ])
             )
             return
@@ -96,7 +118,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     callback_data=f"item_{category}_{i}"
                 )
             ])
-        keyboard.append([InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")])  # НОВА КНОПКА
+        keyboard.append([InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")])
 
         await query.message.reply_text(
             "Обери тайтл:",
@@ -115,7 +137,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔗 Відкрити", url=item["link"])],
             [InlineKeyboardButton("✏️ Змінити статус", callback_data="edit_status")],
             [InlineKeyboardButton("🗑️ Видалити", callback_data="delete")],
-            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
         ]
 
         await query.message.reply_text(
@@ -134,7 +156,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(
             "🗑️ Видалено!",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
             ])
         )
 
@@ -145,7 +167,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("✅ Завершено", callback_data="status_done")],
             [InlineKeyboardButton("⏸️ На паузі", callback_data="status_pause")],
             [InlineKeyboardButton("❌ Кинув", callback_data="status_drop")],
-            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+            [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
         ]
 
         await query.message.reply_text(
@@ -157,7 +179,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif choice.startswith("status_"):
         status = choice.replace("status_", "")
 
-        # РЕДАГУВАННЯ
         if "edit" in context.user_data:
             category, index = context.user_data["edit"]
             data[user_id][category][index]["status"] = status
@@ -168,11 +189,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(
                 "✏️ Оновлено!",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
                 ])
             )
 
-        # НОВИЙ ЗАПИС
         else:
             title = context.user_data["title"]
             category = context.user_data["type"]
@@ -190,7 +210,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(
                 "✅ Додано!",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]  # НОВА КНОПКА
+                    [InlineKeyboardButton("🏠 Головне меню", callback_data="main_menu")]
                 ])
             )
 
@@ -220,14 +240,19 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
+    else:
+        # Якщо юзер пише щось не в контексті — показуємо меню  ← НОВЕ
+        await update.message.reply_text(
+            "Обери категорію:",
+            reply_markup=main_menu_keyboard()
+        )
+
 # ---------- RUN ----------
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(button))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-
-app.run_polling()
+app.add_handler(CommandHandler("menu", menu))  
+app.add_handler(CommandHandler("add", add))    
 app.add_handler(CallbackQueryHandler(button))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
